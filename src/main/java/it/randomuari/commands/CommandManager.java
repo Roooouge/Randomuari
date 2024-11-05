@@ -243,6 +243,7 @@ public class CommandManager {
 
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             try {
+                TeamsManager.cancel();
                 TeamsManager.load(chooser.getSelectedFile());
             } catch (IOException | DocumentException e) {
                 e.printStackTrace();
