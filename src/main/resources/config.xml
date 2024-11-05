@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<config>
+    <players>
+        <manager>
+            <weights>0.5</weights>
+            <redactedBound>5</redactedBound>
+            <redactedString>REDACTED</redactedString>
+            <redactedMaxPerTeam>3</redactedMaxPerTeam>
+        </manager>
+    </players>
+</config>

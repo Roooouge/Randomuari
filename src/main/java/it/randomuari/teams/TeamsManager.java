@@ -1,5 +1,7 @@
 package it.randomuari.teams;
 
+import it.randomuari.config.Config;
+import it.randomuari.events.Events;
 import it.randomuari.events.EventsManager;
 import it.randomuari.gui.GUIUtils;
 import it.randomuari.players.Player;
@@ -53,12 +55,38 @@ public class TeamsManager {
         return team;
     }
 
+    public Team getTeamByName(String name) {
+        for (Team team : TEAMS) {
+            if (team.getName().equals(name)) {
+                return team;
+            }
+        }
+
+        return null;
+    }
+
     /*
      *
      */
 
+    private Player randomPlayerForTeamFromRole(Team team, Roles role, boolean canBeRedacted) {
+        Random random = new Random();
+        int redactedBound = Integer.parseInt(Config.getConfig("//players/manager/redactedBound").getText());
+
+        Player player = PlayersManager.random(role);
+        boolean isRedacted = false;
+        if (canBeRedacted && team.acceptNewRedacted()) {
+            isRedacted = random.nextInt(redactedBound) == 0;
+        }
+        player.setRedacted(isRedacted);
+
+        return player;
+    }
+
     public void random(int rounds) {
         new Thread(() -> {
+            String redactedString = Config.getConfig("//players/manager/redactedString").getText();
+
             for (int i = 0; i < rounds && !allTeamsFull(); i++) {
                 Team team = randomTeam();
                 Roles role;
@@ -67,13 +95,11 @@ public class TeamsManager {
                     role = Roles.randomRole();
                 } while (team.isFullRole(role));
 
-                Player player = PlayersManager.random(role);
-                System.out.println("[" + (i+1) + "/ " + rounds + "] " + role.name() + " - " + player.getName() + " to " + team.getName());
-
-                GUIUtils.ACTIONS_PANEL.setRandomPlayerMessage(player, team, (i+1) + "/" + rounds + " - ");
-//                EventsManager.handle(player, team, EventsManager.randomEvent(), false);
-
+                Player player = randomPlayerForTeamFromRole(team, role, true);
                 team.addPlayer(player);
+
+                System.out.println("[" + (i+1) + "/ " + rounds + "] " + role.name() + (player.isRedacted() ? " " + redactedString : "") + " - " + player.getName() + " to " + team.getName());
+                GUIUtils.ACTIONS_PANEL.setRandomPlayerMessage(player, team, (i+1) + "/" + rounds + " - ");
 
                 try {
                     Thread.sleep(3000);
@@ -87,6 +113,10 @@ public class TeamsManager {
     }
 
     public void randomNoGUI(int rounds) {
+        Random random = new Random();
+        int redactedBound = Integer.parseInt(Config.getConfig("//players/manager/redactedBound").getText());
+        String redactedString = Config.getConfig("//players/manager/redactedString").getText();
+
         for (int i = 0; i < rounds && !allTeamsFull(); i++) {
             Team team = randomTeam();
             Roles role;
@@ -95,12 +125,19 @@ public class TeamsManager {
                 role = Roles.randomRole();
             } while (team.isFullRole(role));
 
-            Player player = PlayersManager.random(role);
-            System.out.println("[" + (i+1) + "/ " + rounds + "] " + role.name() + " - Adding " + player.getName() + " to " + team.getName());
+            Player player = randomPlayerForTeamFromRole(team, role, true);
             team.addPlayer(player);
+
+            System.out.println("[" + (i+1) + "/ " + rounds + "] " + role.name() + (player.isRedacted() ? " " + redactedString : "") + " - " + player.getName() + " to " + team.getName());
         }
 
         GUIUtils.ACTIONS_PANEL.state();
+    }
+
+    public void revealAll() {
+        for (Team team : TEAMS) {
+            team.revealAll();
+        }
     }
 
     public void fillTeams() {
@@ -114,7 +151,7 @@ public class TeamsManager {
 
     public void fillRole(Team team, Roles role) {
         while (!team.isFullRole(role)) {
-            team.addPlayer(PlayersManager.random(role));
+            team.addPlayer(randomPlayerForTeamFromRole(team, role, false));
         }
     }
 
@@ -133,8 +170,13 @@ public class TeamsManager {
         }
     }
 
-    public void cancel() {
+    public void clear() {
         resetTeams();
+        PlayersManager.init();
+    }
+
+    public void cancel() {
+        clear();
         TEAMS.clear();
     }
 
@@ -166,7 +208,9 @@ public class TeamsManager {
             playerElement.addAttribute("id", String.valueOf(player.getId()));
             playerElement.addAttribute("name", player.getName());
             playerElement.addAttribute("team", player.getTeam());
+            playerElement.addAttribute("value", String.valueOf(player.getValue()));
             playerElement.addAttribute("role", role.getKey());
+            playerElement.addAttribute("redacted", String.valueOf(player.isRedacted()));
         }
     }
 
@@ -184,8 +228,12 @@ public class TeamsManager {
                 String name = playerElement.attributeValue("name");
                 String playerTeam = playerElement.attributeValue("team");
                 String role = playerElement.attributeValue("role");
+                int value = Integer.parseInt(playerElement.attributeValue("value"));
+                boolean redacted = Boolean.parseBoolean(playerElement.attributeValue("redacted"));
 
-                team.addPlayer(new Player(id, name, playerTeam, role));
+                Player player = new Player(id, name, playerTeam, role, value, redacted);
+                team.addPlayer(player);
+                PlayersManager.removeAll(player);
             }
 
             TEAMS.add(team);

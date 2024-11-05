@@ -4,6 +4,7 @@ import it.randomuari.gui.mainview.ActionsPanel;
 import it.randomuari.gui.mainview.MainView;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.event.WindowEvent;
 import javax.swing.SwingUtilities;
 import lombok.experimental.UtilityClass;
 
@@ -29,5 +30,9 @@ public class GUIUtils {
             MAIN_VIEW.validate();
             MAIN_VIEW.repaint();
         });
+    }
+
+    public void terminate() {
+        MAIN_VIEW.dispatchEvent(new WindowEvent(MAIN_VIEW, WindowEvent.WINDOW_CLOSING));
     }
 }

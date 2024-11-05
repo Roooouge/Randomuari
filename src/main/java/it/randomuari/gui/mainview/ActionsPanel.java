@@ -1,5 +1,6 @@
 package it.randomuari.gui.mainview;
 
+import it.randomuari.config.Config;
 import it.randomuari.gui.GUIUtils;
 import it.randomuari.players.Player;
 import it.randomuari.teams.Team;
@@ -41,6 +42,7 @@ public class ActionsPanel extends JPanel {
 
     public void state() {
         JPanel panel = new JPanel(new GridLayout(1, TeamsManager.TEAMS.size()));
+        String redactedString = Config.getConfig("//players/manager/redactedString").getText();
 
         int playersPerTeam = 25;
 
@@ -62,7 +64,13 @@ public class ActionsPanel extends JPanel {
             int totalPrints = 0;
             for (int i = 0; i < playersPerTeam; i++) {
                 Player player = team.getPlayerAt(i);
-                String playerName = player == null ? "" : player.getName();
+                String playerName = "";
+                boolean redacted = false;
+
+                if (player != null) {
+                    playerName = player.getName();
+                    redacted = player.isRedacted();
+                }
 
                 if (totalPrints == 0 || totalPrints == 3 || totalPrints == 11 || totalPrints == 19) {
                     int total = 0;
@@ -94,11 +102,17 @@ public class ActionsPanel extends JPanel {
                     teamPanel.add(label, BorderLayout.CENTER);
                 }
 
-                JLabel playerLabel = new JLabel("- " + playerName);
+                JLabel playerLabel = new JLabel("- " + (redacted ? redactedString : playerName));
                 playerLabel.setHorizontalTextPosition(SwingConstants.CENTER);
                 playerLabel.setFont(GUIUtils.FONT);
+                if (redacted) {
+                    playerLabel.setFont(playerLabel.getFont().deriveFont(Font.ITALIC));
+                    playerLabel.setForeground(Color.gray);
+                } else {
+                    playerLabel.setForeground(GUIUtils.FOREGROUND);
+                }
                 playerLabel.setBackground(GUIUtils.BACKGROUND);
-                playerLabel.setForeground(GUIUtils.FOREGROUND);
+
                 teamPanel.add(playerLabel);
 
                 totalPrints ++;
@@ -127,6 +141,8 @@ public class ActionsPanel extends JPanel {
     public void setRandomPlayerMessage(Player player, Team team, String label) {
         final String playerName = player.getName();
         final String playerRole = player.getRole().name();
+        final boolean redacted = player.isRedacted();
+        final String redactedString = Config.getConfig("//players/manager/redactedString").getText();
         final String teamName = team.getName();
         int playerDuration = new Random().nextInt(6000) + 2000;
         int teamDuration = new Random().nextInt(6000) + 2000;
@@ -142,7 +158,7 @@ public class ActionsPanel extends JPanel {
                 long now = System.currentTimeMillis();
 
                 if (now - start >= playerDuration)
-                    playerString = playerName + " (" + playerRole + ")";
+                    playerString = (redacted ? redactedString : playerName) + " (" + playerRole + ")";
                 else
                     playerString = randomString();
 
@@ -162,7 +178,7 @@ public class ActionsPanel extends JPanel {
         } while (now - start < playerDuration || now - start < teamDuration);
 
         timer.cancel();
-        setMessage(label + playerName + " (" + playerRole+ ") goes to " + teamName);
+        setMessage(label + (redacted ? redactedString : playerName) + " (" + playerRole+ ") goes to " + teamName);
     }
 
     /*

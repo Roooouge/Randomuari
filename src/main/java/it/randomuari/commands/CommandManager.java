@@ -1,6 +1,7 @@
 package it.randomuari.commands;
 
 import it.randomuari.gui.GUIUtils;
+import it.randomuari.teams.Team;
 import it.randomuari.teams.TeamsManager;
 import java.io.IOException;
 import java.util.*;
@@ -18,7 +19,9 @@ public class CommandManager {
     public final String NEW_GAME_KEYWORD = "newGame";
     public final String FULL_TEAMS_KEYWORD = "fullTeams";
     public final String RANDOM_KEYWORD = "random";
+    public final String REVEAL_KEYWORD = "reveal";
     public final String STATE_KEYWORD = "state";
+    public final String CLEAR_KEYWORD = "clear";
     public final String CANCEL_KEYWORD = "cancel";
     public final String SAVE_KEYWORD = "save";
     public final String LOAD_KEYWORD = "load";
@@ -30,6 +33,8 @@ public class CommandManager {
         KEYWORDS.add(STATE_KEYWORD);
         KEYWORDS.add(FULL_TEAMS_KEYWORD);
         KEYWORDS.add(RANDOM_KEYWORD);
+        KEYWORDS.add(REVEAL_KEYWORD);
+        KEYWORDS.add(CLEAR_KEYWORD);
         KEYWORDS.add(CANCEL_KEYWORD);
         KEYWORDS.add(SAVE_KEYWORD);
         KEYWORDS.add(LOAD_KEYWORD);
@@ -60,6 +65,10 @@ public class CommandManager {
                 return fullTeams(params);
             case RANDOM_KEYWORD:
                 return random(params);
+            case REVEAL_KEYWORD:
+                return reveal(params);
+            case CLEAR_KEYWORD:
+                return clear(params);
             case CANCEL_KEYWORD:
                 return cancel(params);
             case SAVE_KEYWORD:
@@ -107,9 +116,6 @@ public class CommandManager {
 
         int rounds;
         try {
-            if (params.isEmpty())
-                params.add("1");
-
             rounds = Integer.parseInt(params.get(0));
         } catch (NumberFormatException e) {
             return CommandResult.integerNotFound(null, params.get(0));
@@ -120,6 +126,46 @@ public class CommandManager {
         else
             TeamsManager.random(rounds);
 
+        return CommandResult.ok();
+    }
+
+    private CommandResult reveal(List<String> params) {
+        if (params.size() > 2)
+            return CommandResult.invalidArgsCount(params.size(), "<= 1");
+
+        if (params.isEmpty())
+            TeamsManager.revealAll();
+        else {
+            String errorMsg = "";
+
+            String teamName = params.get(0);
+            Team team = TeamsManager.getTeamByName(teamName);
+            if (team == null) {
+                errorMsg = "InvalidTeamException: there is no team named " + teamName;
+                GUIUtils.ACTIONS_PANEL.setMessage(errorMsg);
+                return CommandResult.ko(errorMsg);
+            }
+
+            int index = -1;
+            if (params.size() == 2) {
+                index = Integer.parseInt(params.get(1));
+
+                int maxIndex = Team.MAX_POR + Team.MAX_DIF + Team.MAX_CEN + Team.MAX_ATT - 1;
+                if (index < 0 || index > maxIndex) {
+                    errorMsg = "InvalidndexException: specified index " + index + " is out of range [0;" + maxIndex + "]";
+                    GUIUtils.ACTIONS_PANEL.setMessage(errorMsg);
+                    return CommandResult.ko(errorMsg);
+                }
+            }
+
+            if (index == -1) {
+                team.revealAll();
+            } else {
+                team.reveal(index);
+            }
+        }
+
+        GUIUtils.ACTIONS_PANEL.state();
         return CommandResult.ok();
     }
 
@@ -134,6 +180,16 @@ public class CommandManager {
         GUIUtils.ACTIONS_PANEL.state();
 
         return CommandResult.ok();
+    }
+
+    private CommandResult clear(List<String> params) {
+        // Sanity check
+        if (!params.isEmpty())
+            return CommandResult.invalidArgsCount(params.size(), 0);
+
+        TeamsManager.clear();
+
+        return state(new ArrayList<>());
     }
 
     private CommandResult cancel(List<String> params) {

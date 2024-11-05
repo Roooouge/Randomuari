@@ -1,5 +1,6 @@
 package it.randomuari.teams;
 
+import it.randomuari.config.Config;
 import it.randomuari.players.Player;
 import it.randomuari.players.Roles;
 import java.util.ArrayList;
@@ -114,6 +115,43 @@ public class Team {
                 && dif.size() >= MAX_DIF
                 && cen.size() >= MAX_CEN
                 && att.size() >= MAX_ATT;
+    }
+
+    /*
+     *
+     */
+
+    public boolean acceptNewRedacted() {
+        int maxRedacted = Integer.parseInt(Config.getConfig("//players/manager/redactedMaxPerTeam").getText());
+
+        int count = 0;
+        int maxPlayers = MAX_POR + MAX_DIF + MAX_CEN + MAX_ATT;
+
+        for (int i = 0; i < maxPlayers; i++) {
+            Player player = getPlayerAt(i);
+            if (player != null && player.isRedacted()) {
+                count++;
+
+                if (count >= maxRedacted)
+                    return false;
+            }
+        }
+
+        return true;
+    }
+
+    public void reveal(int index) {
+        Player player = getPlayerAt(index);
+        if (player != null && player.isRedacted())
+            player.reveal();
+    }
+
+    public void revealAll() {
+        int maxPlayers = MAX_POR + MAX_DIF + MAX_CEN + MAX_ATT;
+
+        for (int i = 0; i < maxPlayers; i++) {
+            reveal(i);
+        }
     }
 
     /*
