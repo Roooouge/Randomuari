@@ -2,10 +2,10 @@
 <config>
     <players>
         <manager>
-            <weights>0.5</weights>
+            <weights>0.4</weights>
             <redactedBound>5</redactedBound>
             <redactedString>REDACTED</redactedString>
-            <redactedMaxPerTeam>3</redactedMaxPerTeam>
+            <redactedMaxPerTeam>6</redactedMaxPerTeam>
         </manager>
     </players>
 </config>

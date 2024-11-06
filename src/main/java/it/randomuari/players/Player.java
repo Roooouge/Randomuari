@@ -1,5 +1,6 @@
 package it.randomuari.players;
 
+import it.randomuari.config.Config;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -38,6 +39,10 @@ public class Player {
 
     public void reveal() {
         setRedacted(false);
+    }
+
+    public String getLabel() {
+        return redacted ? Config.getConfig("//players/manager/redactedString").getText() : name;
     }
 
 }

@@ -42,10 +42,8 @@ public class ActionsPanel extends JPanel {
 
     public void state() {
         JPanel panel = new JPanel(new GridLayout(1, TeamsManager.TEAMS.size()));
-        String redactedString = Config.getConfig("//players/manager/redactedString").getText();
 
         int playersPerTeam = 25;
-
         for (Team team : TeamsManager.TEAMS) {
             JPanel teamPanel = new JPanel(new GridLayout(playersPerTeam + 5, 1));
             teamPanel.setBackground(null);
@@ -64,13 +62,10 @@ public class ActionsPanel extends JPanel {
             int totalPrints = 0;
             for (int i = 0; i < playersPerTeam; i++) {
                 Player player = team.getPlayerAt(i);
-                String playerName = "";
                 boolean redacted = false;
 
-                if (player != null) {
-                    playerName = player.getName();
+                if (player != null)
                     redacted = player.isRedacted();
-                }
 
                 if (totalPrints == 0 || totalPrints == 3 || totalPrints == 11 || totalPrints == 19) {
                     int total = 0;
@@ -102,7 +97,7 @@ public class ActionsPanel extends JPanel {
                     teamPanel.add(label, BorderLayout.CENTER);
                 }
 
-                JLabel playerLabel = new JLabel("- " + (redacted ? redactedString : playerName));
+                JLabel playerLabel = new JLabel("- " + (player == null ? "" : player.getLabel()));
                 playerLabel.setHorizontalTextPosition(SwingConstants.CENTER);
                 playerLabel.setFont(GUIUtils.FONT);
                 if (redacted) {
@@ -139,10 +134,7 @@ public class ActionsPanel extends JPanel {
     }
 
     public void setRandomPlayerMessage(Player player, Team team, String label) {
-        final String playerName = player.getName();
         final String playerRole = player.getRole().name();
-        final boolean redacted = player.isRedacted();
-        final String redactedString = Config.getConfig("//players/manager/redactedString").getText();
         final String teamName = team.getName();
         int playerDuration = new Random().nextInt(6000) + 2000;
         int teamDuration = new Random().nextInt(6000) + 2000;
@@ -158,7 +150,7 @@ public class ActionsPanel extends JPanel {
                 long now = System.currentTimeMillis();
 
                 if (now - start >= playerDuration)
-                    playerString = (redacted ? redactedString : playerName) + " (" + playerRole + ")";
+                    playerString = player.getLabel() + " (" + playerRole + ")";
                 else
                     playerString = randomString();
 
@@ -178,7 +170,7 @@ public class ActionsPanel extends JPanel {
         } while (now - start < playerDuration || now - start < teamDuration);
 
         timer.cancel();
-        setMessage(label + (redacted ? redactedString : playerName) + " (" + playerRole+ ") goes to " + teamName);
+        setMessage(label + player.getLabel() + " (" + playerRole+ ") goes to " + teamName);
     }
 
     /*

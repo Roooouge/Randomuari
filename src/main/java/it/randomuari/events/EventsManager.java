@@ -36,18 +36,6 @@ public class EventsManager {
 
     //
 
-    public void handle(Player player, Team team, Events event, boolean simulate) {
-        System.out.println("- Checking " + event.name());
-
-        switch (event) {
-            case BLAME:
-                blame(player, team, simulate);
-                break;
-        }
-    }
-
-    //
-
     public void blame(Player player, Team team, boolean simulate) {
         int choice = 0;
 

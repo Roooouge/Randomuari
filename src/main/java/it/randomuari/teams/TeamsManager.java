@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
@@ -23,6 +24,7 @@ import org.dom4j.io.SAXReader;
 import org.dom4j.io.XMLWriter;
 
 @UtilityClass
+@Slf4j
 public class TeamsManager {
 
     public final List<Team> TEAMS = new ArrayList<>();;
@@ -98,8 +100,19 @@ public class TeamsManager {
                 Player player = randomPlayerForTeamFromRole(team, role, true);
                 team.addPlayer(player);
 
-                System.out.println("[" + (i+1) + "/ " + rounds + "] " + role.name() + (player.isRedacted() ? " " + redactedString : "") + " - " + player.getName() + " to " + team.getName());
                 GUIUtils.ACTIONS_PANEL.setRandomPlayerMessage(player, team, (i+1) + "/" + rounds + " - ");
+
+                String eventResult = handleEvent(EventsManager.randomEvent());
+                if (eventResult != null && !eventResult.isEmpty()) {
+                    try {
+                        Thread.sleep(3000);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    log.debug(eventResult);
+                    GUIUtils.ACTIONS_PANEL.setMessage(eventResult);
+                }
 
                 try {
                     Thread.sleep(3000);
@@ -110,6 +123,34 @@ public class TeamsManager {
 
             GUIUtils.ACTIONS_PANEL.state();
         }).start();
+    }
+
+    private String handleEvent(Events event) {
+        if (!event.equals(Events.NONE) && !event.validateCondition())
+            return null;
+
+        switch (event) {
+            case SHAKE_UP -> {
+                Team teamFrom = randomTeam();
+                Team teamTo;
+                do {
+                    teamTo = randomTeam();
+                } while (teamFrom.equals(teamTo));
+
+                Player playerFrom = teamFrom.getRandomPlayer();
+                Roles role = playerFrom.getRole();
+                Player playerTo = teamTo.getRandomPlayerFromRole(role);
+
+                teamFrom.removePlayer(playerFrom);
+                teamTo.removePlayer(playerTo);
+                teamFrom.addPlayer(playerTo);
+                teamTo.addPlayer(playerFrom);
+
+                return "Switching " + playerFrom.getLabel() + " (" + teamFrom.getName() + ") to " + playerTo.getName() + " (" + teamTo.getName() + ")";
+            }
+        }
+
+        return null;
     }
 
     public void randomNoGUI(int rounds) {

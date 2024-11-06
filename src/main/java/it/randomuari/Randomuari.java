@@ -21,7 +21,7 @@ public class Randomuari {
             mainView.setVisible(true);
             SwingUtilities.invokeLater(mainView::commandFocus);
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            e.printStackTrace();
         }
     }
 

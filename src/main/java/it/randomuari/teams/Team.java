@@ -6,6 +6,8 @@ import it.randomuari.players.Roles;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -89,6 +91,85 @@ public class Team {
         if (realIndex >= list.size())
             return null;
         return list.get(realIndex);
+    }
+
+    public void setPlayerAt(int i, Player player) {
+        int porBound = MAX_POR;
+        int difBound = porBound + MAX_DIF;
+        int cenBound = difBound + MAX_CEN;
+
+        log.info("{},{},{}", porBound, difBound, cenBound);
+
+        if (i < porBound) {
+            setToCorrectPosition(player, i, por, MAX_POR);
+        } else if (i < difBound) {
+            setToCorrectPosition(player, i - porBound, dif, MAX_DIF);
+        } else if (i < cenBound) {
+            setToCorrectPosition(player, i - difBound, dif, MAX_CEN);
+        } else {
+            setToCorrectPosition(player, i - cenBound, att, MAX_ATT);
+        }
+    }
+
+    private void setToCorrectPosition(Player player, int desiredIndex, List<Player> list, int max) {
+        if (desiredIndex > max)
+            desiredIndex = max;
+
+        for (int i = 0; i < max; i++) {
+            if (list.get(i) == null)
+                desiredIndex = i;
+        }
+
+        list.set(desiredIndex, player);
+    }
+
+    public int getPlayerIndex(Player player) {
+        int index = 0;
+
+        List<Player> list = new ArrayList<>();
+        list.addAll(por);
+        list.addAll(dif);
+        list.addAll(cen);
+        list.addAll(att);
+
+        for (Player p : list) {
+            if (p.equals(player))
+                return index;
+            index++;
+        }
+
+        return -1;
+    }
+
+    public Player getRandomPlayer() {
+        int maxPlayers = MAX_POR + MAX_DIF + MAX_CEN + MAX_ATT;
+        Random random = new Random();
+        Player player = null;
+        do {
+            player = getPlayerAt(random.nextInt(maxPlayers));
+        } while (player == null);
+
+        return player;
+    }
+
+    public Player getRandomPlayerFromRole(Roles role) {
+        Player player = null;
+        do {
+            player = getRandomPlayer();
+        } while (player == null || !player.getRole().equals(role));
+
+        return player;
+    }
+
+    public void removePlayer(Player player) {
+        por.remove(player);
+        dif.remove(player);
+        cen.remove(player);
+        att.remove(player);
+    }
+
+    public boolean isTeamEmpty() {
+        return por.isEmpty() && dif.isEmpty() && cen.isEmpty() && att.isEmpty();
     }
 
     public boolean isFullRole(Roles role) {
